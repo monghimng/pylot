@@ -91,7 +91,7 @@ def create_camera_setups():
             FLAGS.carla_camera_image_width,
             FLAGS.carla_camera_image_height,
             transform)
-        camera_setups.append(rgb_camera_setup, segmented_camera_setup, depth_camera_setup)
+        camera_setups.extend([rgb_camera_setup, segmented_camera_setup, depth_camera_setup])
 
     top_down_location = pylot.simulation.utils.Location(0, 0, 20) # 20 meters above the vehicle center
     top_down_rotation = pylot.simulation.utils.Rotation(0, 90, 0) # face down
