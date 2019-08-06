@@ -102,14 +102,14 @@ class CameraLoggerOp(Op):
                     protocol=pickle.HIGHEST_PROTOCOL)
 
     @staticmethod
-    def create_bgr_frame_handler(self, camera_name):
+    def create_bgr_frame_handler(camera_name):
         '''
         create a handler that writes rgb image frames to disk with file name in the form of
             <data_path>/<identifier>-<time_stamp>.png
         This allows us to easily add more handlers of many cameras.
         '''
 
-        def on_bgr_frame(msg):
+        def on_bgr_frame(self, msg):
             # log every nth frame
             self._frame_cnt[camera_name] += 1
             if self._frame_cnt[camera_name] % self._flags.log_every_nth_frame != 0:
