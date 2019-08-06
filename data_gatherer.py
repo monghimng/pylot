@@ -56,8 +56,8 @@ def create_camera_setups():
     rotation = pylot.simulation.utils.Rotation(0, 0, 0)
     transform = pylot.simulation.utils.Transform(location, rotation)
 
-    top_down_location = pylot.simulation.utils.Location(0, 0, 20)  # 20 meters above the vehicle center
-    top_down_rotation = pylot.simulation.utils.Rotation(0, 90, 0)  # face down
+    top_down_location = pylot.simulation.utils.Location(0, 0, 30)  # 20 meters above the vehicle center
+    top_down_rotation = pylot.simulation.utils.Rotation(-90, 0, 0)  # face down
     top_down_transform = pylot.simulation.utils.Transform(top_down_location, top_down_rotation)
     rgb_camera_setup = pylot.simulation.utils.CameraSetup(
         CENTER_CAMERA_NAME,
@@ -76,7 +76,7 @@ def create_camera_setups():
         'sensor.camera.semantic_segmentation',
         FLAGS.carla_camera_image_width,
         FLAGS.carla_camera_image_height,
-        top_down_transform)
+        transform)
     if FLAGS.camera_left_right:
         location_left = pylot.simulation.utils.Location(
             1.5, -1 * FLAGS.offset_left_right, 1.4)

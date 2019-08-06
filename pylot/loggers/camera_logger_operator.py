@@ -1,6 +1,8 @@
 import numpy as np
 import pickle
 import PIL.Image as Image
+from collections import defaultdict
+import os
 
 import pylot.utils
 from pylot.perception.segmentation.utils import transform_to_cityscapes_palette
@@ -22,6 +24,8 @@ class CameraLoggerOp(Op):
         self._left_bgr_frame_cnt = 0
         self._right_bgr_frame_cnt = 0
 
+        self._frame_cnt = defaultdict(int)
+
     @staticmethod
     def setup_streams(input_streams):
         input_streams.filter(pylot.utils.is_center_camera_stream).add_callback(
@@ -33,7 +37,7 @@ class CameraLoggerOp(Op):
 
         input_streams.filter(
             pylot.utils.is_segmented_camera_stream).add_callback(
-                CameraLoggerOp.on_segmented_frame)
+                CameraLoggerOp.create_segmented_frame_handler('ckhi'))
         input_streams.filter(
             pylot.utils.is_depth_camera_stream).add_callback(
                 CameraLoggerOp.on_depth_frame)
@@ -96,3 +100,28 @@ class CameraLoggerOp(Op):
         pickle.dump(msg.frame,
                     open(file_name, 'wb'),
                     protocol=pickle.HIGHEST_PROTOCOL)
+
+    @staticmethod
+    def create_segmented_frame_handler(identifier):
+        '''
+        create a handler that writes segmentation frames to disk with file name in the form of
+            <data_path>/<identifier>-<time_stamp>.png
+        This allows us to easily add more handlers of many cameras.
+        '''
+
+        def on_segmented_frame(self, msg):
+
+            # log every nth frame
+            self._frame_cnt[identifier] += 1
+            if self._frame_cnt[identifier] % self._flags.log_every_nth_frame != 0:
+                return
+
+            # Write the segmented image.
+            frame = transform_to_cityscapes_palette(msg.frame)
+            img = Image.fromarray(np.uint8(frame))
+            file_name = '{}-{}.png'.format(
+                identifier, msg.timestamp.coordinates[0])
+            path = os.path.join(self._flags.data_path, file_name)
+            img.save(path)
+
+        return on_segmented_frame
