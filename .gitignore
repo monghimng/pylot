@@ -6,3 +6,5 @@ dependencies/
 /doc/build
 .idea/
 venv/
+scratch
+.gitignore
