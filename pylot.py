@@ -137,6 +137,15 @@ def add_detection_component(graph, bgr_camera_setup, camera_ops, carla_op):
                           [fusion_op])
             graph.connect([fusion_op, carla_op], [fusion_verif_op])
 
+    # Currently, we keep this separate from the existing trackers, because the
+    # perfect tracker returns ego-vehicle (x,y,z) coordinates, while our existing
+    # trackers use camera coordinates.
+    perfect_tracker_ops = []
+    if FLAGS.perfect_tracking:
+        perfect_tracker_ops = [pylot.operator_creator.create_perfect_tracking_op(
+            graph, 'perfect_tracker')]
+        graph.connect([carla_op], perfect_tracker_ops)
+
     traffic_light_det_ops = []
     if FLAGS.traffic_light_det:
         traffic_light_det_ops.append(
@@ -148,7 +157,7 @@ def add_detection_component(graph, bgr_camera_setup, camera_ops, carla_op):
         lane_detection_ops.append(
             pylot.operator_creator.create_lane_detection_op(graph))
         graph.connect(camera_ops, lane_detection_ops)
-    return (obj_detector_ops, traffic_light_det_ops, lane_detection_ops)
+    return (obj_detector_ops, perfect_tracker_ops, traffic_light_det_ops, lane_detection_ops)
 
 
 def add_segmentation_component(graph, camera_ops):
@@ -240,6 +249,7 @@ def add_debugging_component(graph, carla_op, camera_ops, lidar_ops):
 def add_perfect_perception_component(graph,
                                      bgr_camera_setup,
                                      ground_obstacles_stream_name,
+                                     lane_detection_stream_name,
                                      carla_op,
                                      camera_ops):
     obj_det_ops = [pylot.operator_creator.create_perfect_detector_op(
@@ -247,7 +257,11 @@ def add_perfect_perception_component(graph,
     graph.connect([carla_op] + camera_ops, obj_det_ops)
     # TODO(ionel): Populate the other types of detectors.
     traffic_light_det_ops = []
-    lane_det_ops = []
+    lane_det_ops = [
+        pylot.operator_creator.create_perfect_lane_detector_op(
+            graph, lane_detection_stream_name)
+    ]
+    graph.connect([carla_op], lane_det_ops)
     # Get the ground segmented frames from the driver operators.
     segmentation_ops = camera_ops
     return (obj_det_ops, traffic_light_det_ops, lane_det_ops, segmentation_ops)
@@ -276,11 +290,13 @@ def main(argv):
              graph,
              bgr_camera_setup,
              'perfect_detector_output',
+             'perfect_lane_detector_output',
              carla_op,
              camera_ops)
     else:
         # Add detectors.
         (obj_det_ops,
+         perfect_tracker_ops,
          traffic_light_det_ops,
          lane_det_ops) = add_detection_component(
              graph, bgr_camera_setup, camera_ops, carla_op)
