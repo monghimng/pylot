@@ -10,6 +10,7 @@ from pylot.control.messages import ControlMessage
 import pylot.operator_creator
 import pylot.simulation.utils
 import pylot.utils
+from pylot.loggers.camera_logger_operator import CameraLoggerOp
 
 FLAGS = flags.FLAGS
 CENTER_CAMERA_NAME = 'front_rgb_camera'
@@ -53,12 +54,16 @@ def create_camera_setups():
     # Note: main assumes that the first camera setup returned by this method is
     # always the rgb_camera_setup.
 
-    # specify the name of the cameras whose frames are to be logged
-    rgb_identifiers = ['rgb-front', 'rgb-right', 'rgb-back', 'rgb-left']
-    segmented_identifiers = ['segmented-front', 'segmented-right', 'segmented-back', 'segmented-left']
-    depth_identifiers = ['depth-front', 'depth-right', 'depth-back', 'depth-left']
-    top_down_segmented = 'segmented-top-down'
-
+    # # specify the name of the cameras whose frames are to be logged
+    # rgb_identifiers = ['rgb-front', 'rgb-right', 'rgb-back', 'rgb-left']
+    # depth_identifiers = ['depth-front', 'depth-right', 'depth-back', 'depth-left']
+    # rgb_identifiers = ['rgb-front', 'rgb-right', 'rgb-back', 'rgb-left']
+    # depth_identifiers = ['depth-front', 'depth-right', 'depth-back', 'depth-left']
+    # SEGMENTED_CAMERA_NAMES = ['segmented-front', 'segmented-right', 'segmented-back', 'segmented-left']
+    top_down_segmented = 'top_down_segmented'
+    SEGMENTED_CAMERA_NAMES = []
+    SEGMENTED_CAMERA_NAMES.append(top_down_segmented)
+    CameraLoggerOp.set_camera_loggers(SEGMENTED_CAMERA_NAMES)
 
     # specify the 4 transforms
     vehicle_center = pylot.simulation.utils.Location(0, 0, 0)
@@ -69,29 +74,29 @@ def create_camera_setups():
     rotations = [forward, right, backward, left]
     transforms = [pylot.simulation.utils.Transform(vehicle_center, rot) for rot in rotations]
 
-    # set up all the cameras, for a total of 12
-    camera_setups = []
-    for rgb, segmented, depth, transform in zip(rgb_identifiers, segmented_identifiers, depth_identifiers, transforms):
-
-        rgb_camera_setup = pylot.simulation.utils.CameraSetup(
-            rgb,
-            'sensor.camera.rgb',
-            FLAGS.carla_camera_image_width,
-            FLAGS.carla_camera_image_height,
-            transform)
-        segmented_camera_setup = pylot.simulation.utils.CameraSetup(
-            segmented,
-            'sensor.camera.semantic_segmentation',
-            FLAGS.carla_camera_image_width,
-            FLAGS.carla_camera_image_height,
-            transform)
-        depth_camera_setup = pylot.simulation.utils.CameraSetup(
-            depth,
-            'sensor.camera.depth',
-            FLAGS.carla_camera_image_width,
-            FLAGS.carla_camera_image_height,
-            transform)
-        camera_setups.extend([rgb_camera_setup, segmented_camera_setup, depth_camera_setup])
+    # # set up all the cameras, for a total of 12
+    # camera_setups = []
+    # for rgb, segmented, depth, transform in zip(rgb_identifiers, segmented_identifiers, depth_identifiers, transforms):
+    #
+    #     rgb_camera_setup = pylot.simulation.utils.CameraSetup(
+    #         rgb,
+    #         'sensor.camera.rgb',
+    #         FLAGS.carla_camera_image_width,
+    #         FLAGS.carla_camera_image_height,
+    #         transform)
+    #     segmented_camera_setup = pylot.simulation.utils.CameraSetup(
+    #         segmented,
+    #         'sensor.camera.semantic_segmentation',
+    #         FLAGS.carla_camera_image_width,
+    #         FLAGS.carla_camera_image_height,
+    #         transform)
+    #     depth_camera_setup = pylot.simulation.utils.CameraSetup(
+    #         depth,
+    #         'sensor.camera.depth',
+    #         FLAGS.carla_camera_image_width,
+    #         FLAGS.carla_camera_image_height,
+    #         transform)
+    #     camera_setups.extend([rgb_camera_setup, segmented_camera_setup, depth_camera_setup])
 
     top_down_location = pylot.simulation.utils.Location(0, 0, 20) # 20 meters above the vehicle center
     top_down_rotation = pylot.simulation.utils.Rotation(0, 90, 0) # face down

@@ -10,6 +10,8 @@ from erdos.utils import setup_csv_logging, setup_logging
 
 
 class CameraLoggerOp(Op):
+
+
     def __init__(self, name, flags, log_file_name=None, csv_file_name=None):
         super(CameraLoggerOp, self).__init__(name)
         self._flags = flags
@@ -22,36 +24,35 @@ class CameraLoggerOp(Op):
         self._left_bgr_frame_cnt = 0
         self._right_bgr_frame_cnt = 0
 
-        # a dictionary that maps camera identifier to its frame cnts so far
-        # used for logging every nth frame
         self._frame_cnt = dict()
+
+    # specify the name of the cameras whose frames are to be logged, should be set by calling set_camera_loggers
+    SEGMENTED_CAMERA_NAMES = None
+
+    @staticmethod
+    def set_camera_loggers(segmented_camera_names):
+        global SEGMENTED_CAMERA_NAMES
+        SEGMENTED_CAMERA_NAMES = segmented_camera_names
 
     @staticmethod
     def setup_streams(input_streams):
 
-        # specify the name of the cameras whose frames are to be logged
-        rgb_identifiers = ['rgb-front', 'rgb-right', 'rgb-back', 'rgb-left']
-        segmented_identifiers = ['segmented-front', 'segmented-right', 'segmented-back', 'segmented-left']
-        depth_identifiers = ['depth-front', 'depth-right', 'depth-back', 'depth-left']
-        top_down_segmented = 'segmented-top-down'
 
-        # add handlers for various cameras to log frames to disk
-        for identifier in rgb_identifiers:
-            input_streams.filter(lambda stream: identifier in stream.name).add_callback(
-                CameraLoggerOp.create_bgr_frame_handler(identifier))
-        for identifier in segmented_identifiers:
-            input_streams.filter(lambda stream: identifier in stream.name).add_callback(
-                CameraLoggerOp.create_segmented_frame_handler(identifier))
-        for identifier in depth_identifiers:
-            input_streams.filter(lambda stream: identifier in stream.name).add_callback(
-                CameraLoggerOp.create_depth_frame_handler(identifier))
-        input_streams.filter(lambda stream: top_down_segmented in stream.name).add_callback(
-            CameraLoggerOp.create_segmented_frame_handler(top_down_segmented))
+        # # add handlers for various cameras to log frames to disk
+        # for identifier in rgb_identifiers:
+        #     input_streams.filter(lambda stream: identifier in stream.name).add_callback(
+        #         CameraLoggerOp.create_bgr_frame_handler(identifier))
+        for name in SEGMENTED_CAMERA_NAMES:
+            # todo: check if equality works
+            input_streams.filter(lambda stream: name in stream.name).add_callback(
+                CameraLoggerOp.create_segmented_frame_handler(name))
+        # for identifier in depth_identifiers:
+        #     input_streams.filter(lambda stream: identifier in stream.name).add_callback(
+        #         CameraLoggerOp.create_depth_frame_handler(identifier))
 
-        # set frame cont of all camera to be 0
-        for identifier in rgb_identifiers + segmented_identifiers + depth_identifiers:
+        # maps camera name to the number of frames logged so far, used for logging every nth frame
+        for identifier in rgb_identifiers + SEGMENTED_CAMERA_NAMES + depth_identifiers:
             CameraLoggerOp._frame_cnt[identifier] = 0
-        CameraLoggerOp._frame_cnt[top_down_segmented] = 0
 
         # input_streams.filter(pylot.utils.is_center_camera_stream).add_callback(
         # CameraLoggerOp.on_bgr_frame)
