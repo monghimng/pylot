@@ -57,9 +57,19 @@ def create_camera_setups():
     rotation = pylot.simulation.utils.Rotation(0, 0, 0)
     transform = pylot.simulation.utils.Transform(location, rotation)
 
-    camera_config = get_camera_setups('top_down_segmented')
+    camera_config = get_camera_setups(['top_down_segmented', 'front'])
 
     setups = []
+
+    for name, transform in zip(camera_config.rgb_camera_names, camera_config.rgb_camera_transforms):
+        rgb_camera_setup = pylot.simulation.utils.CameraSetup(
+            name,
+            'sensor.camera.rgb',
+            FLAGS.carla_camera_image_width,
+            FLAGS.carla_camera_image_height,
+            transform)
+        setups.append(rgb_camera_setup)
+
     for name, transform in zip(camera_config.segmented_camera_names, camera_config.segmented_camera_transforms):
         segmented_camera_setup = pylot.simulation.utils.CameraSetup(
             name,
@@ -68,7 +78,16 @@ def create_camera_setups():
             FLAGS.carla_camera_image_height,
             transform)
         setups.append(segmented_camera_setup)
-    import pdb; pdb.set_trace()
+
+    for name, transform in zip(camera_config.depth_camera_names, camera_config.depth_camera_transforms):
+        depth_camera_setup = pylot.simulation.utils.CameraSetup(
+            name,
+            'sensor.camera.depth',
+            FLAGS.carla_camera_image_width,
+            FLAGS.carla_camera_image_height,
+            transform)
+        setups.append(depth_camera_setup)
+
     return setups
     # rgb_camera_setup = pylot.simulation.utils.CameraSetup(
     #     CENTER_CAMERA_NAME,
