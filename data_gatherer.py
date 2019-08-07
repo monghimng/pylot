@@ -59,6 +59,7 @@ def create_camera_setups():
 
     camera_config = get_camera_setups('top_down_segmented')
 
+    setups = []
     for name, transform in zip(camera_config.segmented_camera_names, camera_config.segmented_camera_transforms):
         segmented_camera_setup = pylot.simulation.utils.CameraSetup(
             name,
@@ -68,6 +69,7 @@ def create_camera_setups():
             transform)
         setups.append(segmented_camera_setup)
     import pdb; pdb.set_trace()
+    return setups
     # rgb_camera_setup = pylot.simulation.utils.CameraSetup(
     #     CENTER_CAMERA_NAME,
     #     'sensor.camera.rgb',

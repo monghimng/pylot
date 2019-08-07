@@ -1,13 +1,15 @@
+import pylot
+
 class CameraSetup:
 
-    def __init__(self, rgb=[], segmented=[], depth=[], rgb_transform=[], segmented_transform=[], depth_transform=[]):
+    def __init__(self, rgb=[], segmented=[], depth=[], rgb_transforms=[], segmented_transforms=[], depth_transforms=[]):
         self.rgb_camera_names = rgb
         self.segmented_camera_names = segmented
         self.depth_camera_names = depth
 
-        self.rgb_camera_transform = rgb_transforms
-        self.segmented_camera_transform = segmented_transforms
-        self.depth_camera_transform = depth_transforms
+        self.rgb_camera_transforms = rgb_transforms
+        self.segmented_camera_transforms = segmented_transforms
+        self.depth_camera_transforms = depth_transforms
 
 def get_camera_setups(setup_config):
 
