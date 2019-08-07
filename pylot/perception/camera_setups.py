@@ -34,5 +34,5 @@ def setup_front_rgb(cfg):
     loc = pylot.simulation.utils.Location(0, 0, 1.4)
     forward = pylot.simulation.utils.Rotation(0, 0, 0)
     transform = pylot.simulation.utils.Transform(loc, forward)
-    cfg.rgb_camera_names.append('carla-center')
+    cfg.rgb_camera_names.append('front')
     cfg.rgb_camera_transforms.append(transform)

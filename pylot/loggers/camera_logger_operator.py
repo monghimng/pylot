@@ -28,15 +28,15 @@ class CameraLoggerOp(Op):
 
     @staticmethod
     def setup_streams(input_streams):
-        input_streams.filter(pylot.utils.is_center_camera_stream).add_callback(
-        CameraLoggerOp.create_bgr_frame_handler('carla-center'))
+        input_streams.filter(lambda stream: 'front' in stream.name).add_callback(
+        CameraLoggerOp.create_bgr_frame_handler('front'))
         input_streams.filter(pylot.utils.is_left_camera_stream).add_callback(
         CameraLoggerOp.on_bgr_frame_left)
         input_streams.filter(pylot.utils.is_right_camera_stream).add_callback(
         CameraLoggerOp.on_bgr_frame_right)
 
         input_streams.filter(
-            pylot.utils.is_segmented_camera_stream).add_callback(
+                lambda stream: stream.name == 'top_down_segmented').add_callback(
                 CameraLoggerOp.create_segmented_frame_handler('segmeted-ck'))
         input_streams.filter(
             pylot.utils.is_depth_camera_stream).add_callback(
