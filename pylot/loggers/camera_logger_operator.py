@@ -6,6 +6,7 @@ import os
 
 import pylot.utils
 from pylot.perception.segmentation.utils import transform_to_cityscapes_palette
+from pylot.perception.camera_setups import CAMERA_NAME_TO_CAMERA_SETUP
 
 from erdos.op import Op
 from erdos.utils import setup_csv_logging, setup_logging
@@ -28,19 +29,24 @@ class CameraLoggerOp(Op):
 
     @staticmethod
     def setup_streams(input_streams):
-        input_streams.filter(lambda stream: 'front' in stream.name).add_callback(
-        CameraLoggerOp.create_bgr_frame_handler('front'))
-        input_streams.filter(pylot.utils.is_left_camera_stream).add_callback(
-        CameraLoggerOp.on_bgr_frame_left)
-        input_streams.filter(pylot.utils.is_right_camera_stream).add_callback(
-        CameraLoggerOp.on_bgr_frame_right)
 
-        input_streams.filter(
-                lambda stream: stream.name == 'top_down_segmented').add_callback(
-                CameraLoggerOp.create_segmented_frame_handler('segmeted-ck'))
-        input_streams.filter(
-            pylot.utils.is_depth_camera_stream).add_callback(
-                CameraLoggerOp.on_depth_frame)
+        # currently, log all cameras that were set up
+        # pass in the name of the camera as the file prefix
+        for name, setup in CAMERA_NAME_TO_CAMERA_SETUP.items():
+            type = setup.camera_type
+            if type == 'sensor.camera.rgb':
+                input_streams.filter(
+                    lambda stream: stream.name == name).add_callback(
+                    CameraLoggerOp.create_bgr_frame_handler(name))
+            elif type == 'sensor.camera.semantic_segmentation':
+                input_streams.filter(
+                    lambda stream: stream.name == name).add_callback(
+                    CameraLoggerOp.create_segmented_frame_handler(name))
+            elif type == 'sensor.camera.depth':
+                input_streams.filter(
+                    lambda stream: stream.name == name).add_callback(
+                    CameraLoggerOp.create_depth_frame_handler(name))
+
         return []
 
     def on_bgr_frame(self, msg):
@@ -118,9 +124,14 @@ class CameraLoggerOp(Op):
             # Write the image.
             assert msg.encoding == 'BGR', 'Expects BGR frames'
             rgb_array = pylot.utils.bgr_to_rgb(msg.frame)
+
+            # determine image path and ensure the directory exists
             file_name = '{}-{}.png'.format(
                 camera_name, msg.timestamp.coordinates[0])
             path = os.path.join(self._flags.data_path, file_name)
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+
             rgb_img = Image.fromarray(np.uint8(rgb_array))
             rgb_img.save(path)
 
@@ -144,9 +155,14 @@ class CameraLoggerOp(Op):
             # Write the segmented image.
             frame = transform_to_cityscapes_palette(msg.frame)
             img = Image.fromarray(np.uint8(frame))
+
+            # determine image path and ensure the directory exists
             file_name = '{}-{}.png'.format(
                 camera_name, msg.timestamp.coordinates[0])
             path = os.path.join(self._flags.data_path, file_name)
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+
             img.save(path)
 
         return on_segmented_frame
@@ -165,10 +181,14 @@ class CameraLoggerOp(Op):
             if self._frame_cnt[camera_name] % self._flags.log_every_nth_frame != 0:
                 return
 
-            # Write the depth information.
+            # determine image path and ensure the directory exists
             file_name = '{}-{}.pkl'.format(
                 camera_name, msg.timestamp.coordinates[0])
             path = os.path.join(self._flags.data_path, file_name)
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+
+            # Write the depth information.
             pickle.dump(msg.frame,
                         open(path, 'wb'),
                         protocol=pickle.HIGHEST_PROTOCOL)

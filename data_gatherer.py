@@ -10,7 +10,7 @@ from pylot.control.messages import ControlMessage
 import pylot.operator_creator
 import pylot.simulation.utils
 import pylot.utils
-from pylot.perception.camera_setups import get_camera_setups
+from pylot.perception.camera_setups import get_camera_setups_by_names
 
 FLAGS = flags.FLAGS
 CENTER_CAMERA_NAME = 'front_rgb_camera'
@@ -31,7 +31,8 @@ flags.DEFINE_float('offset_left_right', 0.05,
                    'from the center.')
 flags.DEFINE_bool('log_bounding_boxes', True,
                   'True to enable bounding box logging')
-
+flags.DEFINE_string('camera_names', 'front,front_segmented',
+                  'comma separated list of camera names to be logged and setup')
 
 class SynchronizerOp(Op):
     def __init__(self, name):
@@ -53,41 +54,9 @@ class SynchronizerOp(Op):
 def create_camera_setups():
     # Note: main assumes that the first camera setup returned by this method is
     # always the rgb_camera_setup.
-    location = pylot.simulation.utils.Location(1.5, 0.0, 1.4)
-    rotation = pylot.simulation.utils.Rotation(0, 0, 0)
-    transform = pylot.simulation.utils.Transform(location, rotation)
 
-    camera_config = get_camera_setups(['top_down_segmented', 'front'])
-
-    setups = []
-
-    for name, transform in zip(camera_config.rgb_camera_names, camera_config.rgb_camera_transforms):
-        rgb_camera_setup = pylot.simulation.utils.CameraSetup(
-            name,
-            'sensor.camera.rgb',
-            FLAGS.carla_camera_image_width,
-            FLAGS.carla_camera_image_height,
-            transform)
-        setups.append(rgb_camera_setup)
-
-    for name, transform in zip(camera_config.segmented_camera_names, camera_config.segmented_camera_transforms):
-        segmented_camera_setup = pylot.simulation.utils.CameraSetup(
-            name,
-            'sensor.camera.semantic_segmentation',
-            FLAGS.carla_camera_image_width,
-            FLAGS.carla_camera_image_height,
-            transform)
-        setups.append(segmented_camera_setup)
-
-    for name, transform in zip(camera_config.depth_camera_names, camera_config.depth_camera_transforms):
-        depth_camera_setup = pylot.simulation.utils.CameraSetup(
-            name,
-            'sensor.camera.depth',
-            FLAGS.carla_camera_image_width,
-            FLAGS.carla_camera_image_height,
-            transform)
-        setups.append(depth_camera_setup)
-
+    camera_names = FLAGS.camera_names.split(',')
+    setups = get_camera_setups_by_names(camera_names)
     return setups
     # rgb_camera_setup = pylot.simulation.utils.CameraSetup(
     #     CENTER_CAMERA_NAME,
